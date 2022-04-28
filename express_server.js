@@ -7,15 +7,22 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+app.set("view engine", "ejs"); //to enable EJS, set its as view engine
+
 app.get("/", (req, res) => {
   res.send("Hello!"); //writing to client
 });
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase); //writinhg JSON to client on URL path specified
 });
-app.get("/hello", (req, res) => { //response to send when url requested is /hello 
+app.get("/hello", (req, res) => { //response to send when url requested is /hello
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
+});
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
