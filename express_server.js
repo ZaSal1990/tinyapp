@@ -3,7 +3,7 @@ const app = express(); //creates interface (constructor)
 const PORT = 8080; // default port 8080
 
 const generateRandomString = () => {
-  Math.random().toString(36).slice(2, 7);
+  return Math.random().toString(36).slice(2, 8);
 };
 
 const urlDatabase = {
@@ -32,14 +32,22 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
-app.get("/urls/:shortURL", (req, res) => {
+app.get("/urls/:shortURL", (req, res) => {//**
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
   //http://localhost:8080/urls/b2xVn2
 });
 app.post("/urls", (req, res) => {//form brings data back to /urls
-  console.log(req.body);  // Log the POST request body to the console, with POST req, test field parametet is vaialable to req.bosy
-  res.send("Ok");         // Respond with 'Ok' to server
+  let newshortURL = generateRandomString();
+  urlDatabase[newshortURL] = req.body.longURL;
+  console.log(urlDatabase);
+  //console.log(req.body); //with POST req, test field parameter is vaialable to req.body
+  //res.send("Ok");// Respond with 'Ok' to server
+  res.redirect(`/urls/${newshortURL}`);//redirecting to route **
+});
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.listen(PORT, () => {
