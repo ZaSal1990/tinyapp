@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/ZaSal1990/tinyapp#readme",
   "dependencies": {
+    "body-parser": "^1.20.0",
     "express": "^4.18.0"
   }
 }
