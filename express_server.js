@@ -39,15 +39,20 @@ app.get("/urls/:shortURL", (req, res) => {//**
 });
 app.post("/urls", (req, res) => {//form brings data back to /urls
   let newshortURL = generateRandomString();
-  urlDatabase[newshortURL] = req.body.longURL;
+  urlDatabase[newshortURL] = req.body.longURL; //with POST req, text field parameter is vaialable to req.body
   console.log(urlDatabase);
-  //console.log(req.body); //with POST req, test field parameter is vaialable to req.body
   //res.send("Ok");// Respond with 'Ok' to server
   res.redirect(`/urls/${newshortURL}`);//redirecting to route **
 });
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
+});
+app.post("/urls/:shortURL/delete", (req, res) => {//route to delete request
+  let itemToBeDeleted = req.params.shortURL;
+  delete urlDatabase[itemToBeDeleted];
+  console.log(urlDatabase);
+  res.redirect(`/urls`);//redirecting to route **
 });
 
 app.listen(PORT, () => {
