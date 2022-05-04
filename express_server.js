@@ -1,4 +1,7 @@
 const express = require("express");
+const cookieParser = require('cookie-parser');
+const bodyParser = require("body-parser");
+const morgan = require('morgan');
 const app = express(); //creates interface (constructor)
 const PORT = 8080; // default port 8080
 
@@ -11,32 +14,38 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const bodyParser = require("body-parser"); //required esp when using POST route, doing JSON parsing on form inout data here
+//required esp when using POST route, doing JSON parsing on form input data (body) here
 app.use(bodyParser.urlencoded({extended: true}));
-
+app.use(cookieParser());
+app.use(morgan('dev'));
 app.set("view engine", "ejs"); //to enable EJS, set its as view engine
 
-// app.get("/", (req, res) => {
-//   res.send("Hello!"); //writing to client
-// });
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase); //writinhg JSON to client on URL path specified
-// });
-// app.get("/hello", (req, res) => { //response to send when url requested is /hello
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase
+  };
   res.render("urls_index", templateVars);
 });
+
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_new", templateVars);
 });
+
 app.get("/urls/:shortURL", (req, res) => {//**
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    username: req.cookies["username"]
+  };
   res.render("urls_show", templateVars);
   //http://localhost:8080/urls/b2xVn2
+
 });
+
 app.post("/urls", (req, res) => {//form brings data back to /urls
   let newshortURL = generateRandomString();
   urlDatabase[newshortURL] = req.body.longURL; //with POST req, text field parameter is vaialable to req.body
@@ -44,15 +53,34 @@ app.post("/urls", (req, res) => {//form brings data back to /urls
   //res.send("Ok");// Respond with 'Ok' to server
   res.redirect(`/urls/${newshortURL}`);//redirecting to route **
 });
+
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
+
 app.post("/urls/:shortURL/delete", (req, res) => {//route to delete request
   let itemToBeDeleted = req.params.shortURL;
   delete urlDatabase[itemToBeDeleted];
   console.log(urlDatabase);
   res.redirect(`/urls`);//redirecting to route **
+});
+
+app.post("/urls/:id", (req, res) => {//route to update URL
+  let itemToBeUpdated = req.params.id;
+  console.log(itemToBeUpdated);
+  res.redirect(`/urls/${itemToBeUpdated}`);//redirecting to route **
+});
+
+app.post("/login", (req, res) => {//route to login post submission
+  let username = req.body.username;
+  res.cookie('username', { username : username }); //prepping/nstructing vis response server to set cookie and passed as object to be later used for session
+  res.redirect(`/urls`);//redirecting to route inside ''
+});
+
+app.post("/logout", (req, res) => {//route to login post submission
+  res.clearCookie('username');
+  res.redirect(`/urls`);//redirecting to route inside ''
 });
 
 app.listen(PORT, () => {
