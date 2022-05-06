@@ -9,10 +9,32 @@ const generateRandomString = () => {
   return Math.random().toString(36).slice(2, 8);
 };
 
+const ifEmailExistsAlready = (sourceEmail, targetObject) => {
+  for (let key in targetObject) {
+    let item = targetObject[key];
+    if (item.email === sourceEmail) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const ifCredentialsMatched = (sourceEmail, sourcePassword, targetObject) => {
+  for (let key in targetObject) {
+    let item = targetObject[key];
+    if (item.email === sourceEmail && item.password === sourcePassword) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+const users = [];
 
 //required esp when using POST route, doing JSON parsing on form input data (body) here
 app.use(bodyParser.urlencoded({extended: true}));
@@ -21,17 +43,34 @@ app.use(morgan('dev'));
 app.set("view engine", "ejs"); //to enable EJS, set its as view engine
 
 app.get("/urls", (req, res) => {
+  const userId = req.cookies['user_id']; //cookie name if user is registered already
+  const userName = req.cookies['username']; //cookie name if user is trying to login only
+  let user;
+  if (userId) {
+    user = users[userId];
+  } else if (userName) {
+    for (let key in users) {
+      const item = users[key];
+      if (item.email === userName.email) {
+        user = item; //whole user
+      }
+    }
+  }
+  
   const templateVars = {
-    username: req.cookies["username"],
-    urls: urlDatabase
+    username: req.cookies['username'], //create utility fns to go into user object to extract user and bring it out here 
+    urls: urlDatabase,
+    user : user
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    username: req.cookies['username'],
+    user : null
   };
+  console.log(templateVars);
   res.render("urls_new", templateVars);
 });
 
@@ -39,24 +78,41 @@ app.get("/urls/:shortURL", (req, res) => {//**
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    username: req.cookies['username'],
+    user : null
   };
   res.render("urls_show", templateVars);
   //http://localhost:8080/urls/b2xVn2
-
-});
-
-app.post("/urls", (req, res) => {//form brings data back to /urls
-  let newshortURL = generateRandomString();
-  urlDatabase[newshortURL] = req.body.longURL; //with POST req, text field parameter is vaialable to req.body
-  console.log(urlDatabase);
-  //res.send("Ok");// Respond with 'Ok' to server
-  res.redirect(`/urls/${newshortURL}`);//redirecting to route **
 });
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies['username'],
+    user : null
+  };
+  res.render("register", templateVars);
+});
+//
+app.get("/login", (req, res) => {
+  const templateVars = {
+    username: req.cookies['username'],
+    user : null
+  };
+  res.render("login", templateVars);
+});
+
+
+//----------------------------------------------------------------------------//
+app.post("/urls", (req, res) => {//form brings data back to /urls
+  let newshortURL = generateRandomString();
+  urlDatabase[newshortURL] = req.body.longURL; //with POST req, text field parameter is vaialable to req.body
+  console.log(urlDatabase);
+  res.redirect(`/urls/${newshortURL}`);//redirecting to route **
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {//route to delete request
@@ -72,16 +128,48 @@ app.post("/urls/:id", (req, res) => {//route to update URL
   res.redirect(`/urls/${itemToBeUpdated}`);//redirecting to route **
 });
 
+app.post("/register", (req, res) => {//route to login post submission for registration
+  if (!req.body.email || !req.body.password) {
+    res.status(400).send(`Error: ${res.statusCode} - Invalid data input`);
+  } else {
+    if (ifEmailExistsAlready(req.body.email, users) === true) {
+      res.status(400).send(`Error: ${res.statusCode} - Email exists already`);
+    } else {
+      let newId = generateRandomString();
+      users[newId] = {
+        id : newId,
+        email : req.body.email,
+        password : req.body.password
+      };
+      res.cookie('user_id', newId); //user_id should be stored
+      res.redirect(`/urls`);//redirecting to route inside ''
+    }
+  }
+});
+
 app.post("/login", (req, res) => {//route to login post submission
-  let username = req.body.username;
-  res.cookie('username', { username : username }); //prepping/nstructing vis response server to set cookie and passed as object to be later used for session
-  res.redirect(`/urls`);//redirecting to route inside ''
+  let newemail = req.body.email;
+  let newpassword = req.body.password;
+  if (!req.body.email || !req.body.password) {
+    res.status(400).send(`Error: ${res.statusCode} - Invalid data input`);
+  } else {
+    let credentialsMatchingResult = ifCredentialsMatched(newemail, newpassword, users); //if user is found in DB
+    if (credentialsMatchingResult === true) {
+      res.cookie('username', { email : newemail }); //send username via cookie and establish session
+      res.redirect(`/urls`);//redirecting to route inside ''
+    } else res.status(400).send(`Error: ${res.statusCode} User not registered`);
+    //prepping/nstructing vis response server to set cookie and passed as object to be later used for session
+    res.redirect(`/register`);//redirecting to route inside ''
+  }
 });
 
 app.post("/logout", (req, res) => {//route to login post submission
+  res.clearCookie('user_id');
   res.clearCookie('username');
   res.redirect(`/urls`);//redirecting to route inside ''
 });
+
+//----------------------------------------------------------------------------//
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
