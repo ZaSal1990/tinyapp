@@ -19,15 +19,28 @@ const ifEmailExistsAlready = (sourceEmail, targetObject) => {
   return false;
 };
 
-const ifCredentialsMatched = (sourceEmail, sourcePassword, targetObject) => {
+const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObject) => {
   for (let key in targetObject) {
-    let item = targetObject[key];
-    if (item.email === sourceEmail && item.password === sourcePassword) {
-      return true;
-    }
+    let user = targetObject[key];
+    if (user.email === sourceEmail) {
+      if (user.password === sourcePassword) {
+        return user;
+      } else return 'Password doesn\'t match';
+    } else return 'Email doesn\'t exist';
   }
-  return false;
+  return 'Cannot find user with these credentials';
 };
+
+// const returnUser = (sourceEmail, targetObject) => {
+//   let result;
+//   for (let key in targetObject) {
+//     let user = targetObject[key];
+//     if (user.email === sourceEmail) {
+//       result = {user};
+//     }
+//   }
+//   return result;
+// };
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -43,32 +56,27 @@ app.use(morgan('dev'));
 app.set("view engine", "ejs"); //to enable EJS, set its as view engine
 
 app.get("/urls", (req, res) => {
-  const userId = req.cookies['user_id']; //cookie name if user is registered already
-  const userName = req.cookies['username']; //cookie name if user is trying to login only
-  let user;
-  if (userId) {
-    user = users[userId];
-  } else if (userName) {
-    for (let key in users) {
-      const item = users[key];
-      if (item.email === userName.email) {
-        user = item; //whole user
-      }
-    }
-  }
+  //const userId = req.cookies['user_id']; //cookie name if user is registered already
+  //const userName = req.cookies['username']; //cookie name if user is trying to login only
   
+  // let user;
+  // if (req.cookies['user_id']) { //if cookie is set beofre
+  //   user = req.cookies['user_id'];
+  // }
+ 
   const templateVars = {
-    username: req.cookies['username'], //create utility fns to go into user object to extract user and bring it out here 
+    //username: req.cookies['username'], //create utility fns to go into user object to extract user and bring it out here 
     urls: urlDatabase,
-    user : user
+    user : req.cookies['user_id']
   };
+  
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
-    user : null
+    //username: req.cookies['username'],
+    user : req.cookies['user_id']
   };
   console.log(templateVars);
   res.render("urls_new", templateVars);
@@ -78,8 +86,8 @@ app.get("/urls/:shortURL", (req, res) => {//**
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies['username'],
-    user : null
+    //username: req.cookies['username'],
+    user : req.cookies['user_id']
   };
   res.render("urls_show", templateVars);
   //http://localhost:8080/urls/b2xVn2
@@ -92,16 +100,15 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
-    user : null
+    //username: req.cookies['username'],
+    user : req.cookies['user_id']
   };
   res.render("register", templateVars);
 });
 //
 app.get("/login", (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
-    user : null
+    user: req.cookies['user_id'],
   };
   res.render("login", templateVars);
 });
@@ -111,7 +118,7 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {//form brings data back to /urls
   let newshortURL = generateRandomString();
   urlDatabase[newshortURL] = req.body.longURL; //with POST req, text field parameter is vaialable to req.body
-  console.log(urlDatabase);
+  //console.log(urlDatabase);
   res.redirect(`/urls/${newshortURL}`);//redirecting to route **
 });
 
@@ -141,7 +148,8 @@ app.post("/register", (req, res) => {//route to login post submission for regist
         email : req.body.email,
         password : req.body.password
       };
-      res.cookie('user_id', newId); //user_id should be stored
+      console.log(users[newId]);
+      res.cookie('user_id', users[newId]); //user_id should be stored
       res.redirect(`/urls`);//redirecting to route inside ''
     }
   }
@@ -153,19 +161,19 @@ app.post("/login", (req, res) => {//route to login post submission
   if (!req.body.email || !req.body.password) {
     res.status(400).send(`Error: ${res.statusCode} - Invalid data input`);
   } else {
-    let credentialsMatchingResult = ifCredentialsMatched(newemail, newpassword, users); //if user is found in DB
-    if (credentialsMatchingResult === true) {
-      res.cookie('username', { email : newemail }); //send username via cookie and establish session
+    let databaseSearch = ifCredentialsMatchedReturnUser(newemail, newpassword, users); //if user is found in DB
+    if (typeof databaseSearch === "object") {
+      console.log(databaseSearch);
+      res.cookie('user_id', databaseSearch); //send username via cookie and establish session
       res.redirect(`/urls`);//redirecting to route inside ''
-    } else res.status(400).send(`Error: ${res.statusCode} User not registered`);
+    } else res.status(403).send(`Error: ${res.statusCode} ${databaseSearch}`);
     //prepping/nstructing vis response server to set cookie and passed as object to be later used for session
-    res.redirect(`/register`);//redirecting to route inside ''
+    //res.redirect(`/register`);//redirecting to route inside ''
   }
 });
 
 app.post("/logout", (req, res) => {//route to login post submission
   res.clearCookie('user_id');
-  res.clearCookie('username');
   res.redirect(`/urls`);//redirecting to route inside ''
 });
 
