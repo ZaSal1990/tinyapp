@@ -31,20 +31,6 @@ const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObjec
   return 'Cannot find user with these credentials';
 };
 
-<<<<<<< HEAD
-=======
-// const returnUser = (sourceEmail, targetObject) => {
-//   let result;
-//   for (let key in targetObject) {
-//     let user = targetObject[key];
-//     if (user.email === sourceEmail) {
-//       result = {user};
-//     }
-//   }
-//   return result;
-// };
->>>>>>> fd0d260aeb5ea93c0c9479fd059974ed5b4d37ee
-
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -63,20 +49,7 @@ app.set("view engine", "ejs"); //to enable EJS, set its as view engine
 
 
 app.get("/urls", (req, res) => {
-<<<<<<< HEAD
   const templateVars = {
-=======
-  //const userId = req.cookies['user_id']; //cookie name if user is registered already
-  //const userName = req.cookies['username']; //cookie name if user is trying to login only
-  
-  // let user;
-  // if (req.cookies['user_id']) { //if cookie is set beofre
-  //   user = req.cookies['user_id'];
-  // }
- 
-  const templateVars = {
-    //username: req.cookies['username'], //create utility fns to go into user object to extract user and bring it out here 
->>>>>>> fd0d260aeb5ea93c0c9479fd059974ed5b4d37ee
     urls: urlDatabase,
     user : req.cookies['user_id']
   };
@@ -86,10 +59,6 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-<<<<<<< HEAD
-=======
-    //username: req.cookies['username'],
->>>>>>> fd0d260aeb5ea93c0c9479fd059974ed5b4d37ee
     user : req.cookies['user_id']
   };
   res.render("urls_new", templateVars);
@@ -99,10 +68,6 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-<<<<<<< HEAD
-=======
-    //username: req.cookies['username'],
->>>>>>> fd0d260aeb5ea93c0c9479fd059974ed5b4d37ee
     user : req.cookies['user_id']
   };
   res.render("urls_show", templateVars);
@@ -115,10 +80,6 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-<<<<<<< HEAD
-=======
-    //username: req.cookies['username'],
->>>>>>> fd0d260aeb5ea93c0c9479fd059974ed5b4d37ee
     user : req.cookies['user_id']
   };
   res.render("register", templateVars);
@@ -139,10 +100,6 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {//form brings data back to /urls
   let newshortURL = generateRandomString();
   urlDatabase[newshortURL] = req.body.longURL; //with POST req, text field parameter is vaialable to req.body
-<<<<<<< HEAD
-=======
-  //console.log(urlDatabase);
->>>>>>> fd0d260aeb5ea93c0c9479fd059974ed5b4d37ee
   res.redirect(`/urls/${newshortURL}`);//redirecting to route **
 });
 
@@ -191,12 +148,7 @@ app.post("/login", (req, res) => {//route to login post submission
       res.cookie('user_id', databaseSearch); //send username via cookie and establish session
       res.redirect(`/urls`);//redirecting to route inside ''
     } else res.status(403).send(`Error: ${res.statusCode} ${databaseSearch}`);
-<<<<<<< HEAD
     //prepping/instructing vis response server to set cookie and passed as object to be later used for session
-=======
-    //prepping/nstructing vis response server to set cookie and passed as object to be later used for session
-    //res.redirect(`/register`);//redirecting to route inside ''
->>>>>>> fd0d260aeb5ea93c0c9479fd059974ed5b4d37ee
   }
 });
 
