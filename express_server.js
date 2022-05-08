@@ -19,6 +19,15 @@ const ifEmailExistsAlready = (sourceEmail, targetObject) => {
   return false;
 };
 
+const retrunURLSForTheUser = (userCookie, targetObject) => {
+  //return targetObject[userCookie].longURL;
+  for (let key in targetObject) {
+    if (targetObject[key].userID === userCookie) {
+      return targetObject[key].longURL;
+    }
+  }
+};
+
 const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObject) => {
   for (let key in targetObject) {
     let user = targetObject[key];
@@ -32,9 +41,16 @@ const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObjec
 };
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  // "b2xVn2": {
+  //   longURL : "http://www.lighthouselabs.ca",
+  //   userID: "cz1dxi"
+  // },
+  // "9sm5xK": {
+  //   longURL : "http://www.google.com",
+  //   userID : "9sm5xK"
+  // }
 };
+
 
 const users = [];
 
@@ -49,32 +65,56 @@ app.set("view engine", "ejs"); //to enable EJS, set its as view engine
 
 
 app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user : req.cookies['user_id']
-  };
-  
-  res.render("urls_index", templateVars);
+  if (!req.cookies['user_id']) {
+    res.redirect('/login');
+  } else {
+    const templateVars = {
+      urls: urlDatabase,
+      user : req.cookies['user_id'],
+    };
+    //console.log(templateVars.urls);
+    //console.log(req.cookies['user_id'].id); //dead code
+    //console.log(urlDatabase);//dead code
+    //console.log(retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase));
+    res.render("urls_index", templateVars);
+  }
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    user : req.cookies['user_id']
-  };
-  res.render("urls_new", templateVars);
+  if (!req.cookies['user_id']) {
+    res.redirect('/login');
+  } else {
+    console.log(req.cookies['user_id'].id); //dead code
+    console.log(urlDatabase);//dead code
+    const templateVars = {
+      user : req.cookies['user_id'],
+      urls : urlDatabase
+    };
+    res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    user : req.cookies['user_id']
-  };
-  res.render("urls_show", templateVars);
+  if (!req.cookies['user_id']) {
+    res.redirect('/login');
+  } else {
+    //console.log(req.cookies['user_id'].id); //dead code
+    //console.log(urlDatabase);//dead code
+    //let URL = retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase);
+    //console.log(URL);
+    const templateVars = {
+      shortURL: req.params.shortURL,
+      urls : retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase),
+      //longURL: urlDatabase[req.params.shortURL],
+      user : req.cookies['user_id']
+    };
+    //console.log(templateVars.urls);
+    res.render("urls_show", templateVars);
+  }
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -96,23 +136,26 @@ app.get("/login", (req, res) => {
 //----------------------------------------------------------------------------//
 
 
-
 app.post("/urls", (req, res) => {//form brings data back to /urls
   let newshortURL = generateRandomString();
-  urlDatabase[newshortURL] = req.body.longURL; //with POST req, text field parameter is vaialable to req.body
+  urlDatabase[newshortURL] = {
+    longURL : req.body.longURL,
+    userID : req.cookies['user_id'].id
+  };
+  //with POST req, text field parameter is vaialable to req.body
   res.redirect(`/urls/${newshortURL}`);//redirecting to route **
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {//route to delete request
   let itemToBeDeleted = req.params.shortURL;
   delete urlDatabase[itemToBeDeleted];
-  console.log(urlDatabase);
+  //console.log(urlDatabase);
   res.redirect(`/urls`);//redirecting to route **
 });
 
 app.post("/urls/:id", (req, res) => {//route to update URL
   let itemToBeUpdated = req.params.id;
-  console.log(itemToBeUpdated);
+  urlDatabase[itemToBeUpdated].longURL = req.body.longURL;
   res.redirect(`/urls/${itemToBeUpdated}`);//redirecting to route **
 });
 
