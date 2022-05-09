@@ -1,12 +1,12 @@
 const express = require("express");
-const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
-
-const bodyParser = require("body-parser");
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
-const app = express(); //creates interface (constructor)
+const bodyParser = require("body-parser");
+
 const PORT = 8080; // default port 8080
+
+//Functions--------------------------------------------------------------------//
 
 const generateRandomString = () => {
   return Math.random().toString(36).slice(2, 8);
@@ -33,9 +33,7 @@ const retrunURLSForTheUser = (userCookie, targetObject) => {
   return result;
 };
 
-
 const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObject) => {
-  console.log('from inside fns body',users);
   for (let key in targetObject) {
     let user = targetObject[key];
     if (user.email === sourceEmail) {
@@ -50,10 +48,9 @@ const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObjec
 
 const returnURLSforAUser = (userCookie, targetObject) => {
   let newDatabase = {};
-  console.log('user cookie check',userCookie);
   for (let key in targetObject) {
     let user = targetObject[key];
-    console.log('target objcet', targetObject, 'user cookie', userCookie);
+
     if (user.userID === userCookie) {
       newDatabase[key] = user.longURL;
     }
@@ -61,30 +58,20 @@ const returnURLSforAUser = (userCookie, targetObject) => {
   return newDatabase;
 };
 
-const urlDatabase = {
-  // "b2xVn2": {
-  //   longURL : "http://www.lighthouselabs.ca",
-  //   userID: "cz1dxi"
-  // },
-  // "9sm5xK": {
-  //   longURL : "http://www.google.com",
-  //   userID : "9sm5xK"
-  // }
-};
-
-
+//GlobalObjects--------------------------------------------------------------------//
+const urlDatabase = {};
 const users = {};
 
-//required esp when using POST route, doing JSON parsing on form input data (body) here
+
+//Middleware--------------------------------------------------------------------//
 app.use(bodyParser.urlencoded({extended: true}));
-//app.use(cookieParser());
+const app = express(); //creates interface (constructor)
 app.use(cookieSession({ keys : ['user_id']}));
 app.use(morgan('dev'));
 app.set("view engine", "ejs"); //to enable EJS, set its as view engine
 
 
-//----------------------------------------------------------------------------//
-
+//GET Routes----------------------------------------------------------------------//
 
 app.get("/urls", (req, res) => {
   if (!req.session.user_id) {
@@ -96,9 +83,6 @@ app.get("/urls", (req, res) => {
       user : users[req.session.user_id],
     };
     console.log('temolateVars' ,templateVars.urls);
-    //console.log(req.cookies['user_id'].id); //dead code
-    //console.log(urlDatabase);//dead code
-    //console.log(retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase));
     res.render("urls_index", templateVars);
   }
 });
@@ -107,8 +91,6 @@ app.get("/urls/new", (req, res) => {
   if (!req.session.user_id) {
     res.redirect('/login');
   } else {
-    console.log(req.session.user_id); //dead code
-    console.log(urlDatabase);//dead code
     const templateVars = {
       user : users[req.session.user_id],
       urls : urlDatabase
@@ -121,16 +103,11 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
     res.redirect('/login');
   } else {
-    //console.log(req.cookies['user_id'].id); //dead code
-    //console.log(urlDatabase);//dead code
-    //let URL = retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase);
-    //console.log(URL);
     const templateVars = {
       shortURL: req.params.shortURL,
       urls : retrunURLSForTheUser(req.session.user_id, urlDatabase),
       user : users[req.session.user_id],
     };
-    console.log(templateVars.urls);
     res.render("urls_show", templateVars);
   }
 });
@@ -155,9 +132,7 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-
-//----------------------------------------------------------------------------//
-
+//POSET Routes --------------------------------------------------------------------//
 
 app.post("/urls", (req, res) => {//form brings data back to /urls
   let newshortURL = generateRandomString();
@@ -165,21 +140,19 @@ app.post("/urls", (req, res) => {//form brings data back to /urls
     longURL : req.body.longURL,
     userID : req.session.user_id
   };
-  //with POST req, text field parameter is vaialable to req.body
-  res.redirect(`/urls/${newshortURL}`);//redirecting to route **
+  res.redirect(`/urls/${newshortURL}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {//route to delete request
   let itemToBeDeleted = req.params.shortURL;
   delete urlDatabase[itemToBeDeleted];
-  //console.log(urlDatabase);
   res.redirect(`/urls`);//redirecting to route **
 });
 
 app.post("/urls/:id", (req, res) => {//route to update URL
   let itemToBeUpdated = req.params.id;
   urlDatabase[itemToBeUpdated].longURL = req.body.longURL;
-  res.redirect(`/urls/${itemToBeUpdated}`);//redirecting to route **
+  res.redirect(`/urls/${itemToBeUpdated}`);
 });
 
 app.post("/register", (req, res) => {//route to login post submission for registration
@@ -197,11 +170,8 @@ app.post("/register", (req, res) => {//route to login post submission for regist
         email : req.body.email,
         password : hashedPassword
       };
-      console.log('from inside /register post route', users);
-      //console.log(users[newId]);
-      //res.cookie('user_id', users[newId]); //user_id should be stored
       req.session.user_id = users[newId].id;
-      res.redirect(`/urls`);//redirecting to route inside ''
+      res.redirect(`/urls`);
     }
   }
 });
@@ -213,28 +183,22 @@ app.post("/login", (req, res) => {//route to login post submission
     res.status(400).send(`Error: ${res.statusCode} - Invalid data input`);
   } else {
     console.log('from inside /login post route', users);
-    let databaseSearch = ifCredentialsMatchedReturnUser(newemail, newpassword, users); //if user is found in DB
-    //console.log(typeof databaseSearch); //unable to find user when login with second registrant
-    if (/*typeof*/ databaseSearch.error /*=== 'string'*/) {
-      //console.log(databaseSearch);
+    let databaseSearch = ifCredentialsMatchedReturnUser(newemail, newpassword, users);
+    if (databaseSearch.error) {
       res.status(403).send(`Error: ${res.statusCode} ${databaseSearch.error}`);
     } else if (!databaseSearch.error) {
-      //console.log(databaseSearch);
       req.session.user_id = databaseSearch.id;
-      //res.cookie('user_id', databaseSearch); //send username via cookie and establish session
-      res.redirect(`/urls`);//redirecting to route inside ''
+      res.redirect(`/urls`);
     }
   }
-  //prepping/instructing vis response server to set cookie and passed as object to be later used for session
 });
 
 app.post("/logout", (req, res) => {//route to login post submission
-  //res.clearCookie('user_id');
   req.session = null;
-  res.redirect(`/urls`);//redirecting to route inside ''
+  res.redirect(`/urls`);
 });
 
-//----------------------------------------------------------------------------//
+//Port Listening----------------------------------------------------------------------//
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
