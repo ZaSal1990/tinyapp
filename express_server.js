@@ -3,7 +3,7 @@ const cookieSession = require('cookie-session');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const bodyParser = require("body-parser");
-
+const app = express(); //creates interface (constructor)
 const PORT = 8080; // default port 8080
 
 //Functions--------------------------------------------------------------------//
@@ -65,7 +65,6 @@ const users = {};
 
 //Middleware--------------------------------------------------------------------//
 app.use(bodyParser.urlencoded({extended: true}));
-const app = express(); //creates interface (constructor)
 app.use(cookieSession({ keys : ['user_id']}));
 app.use(morgan('dev'));
 app.set("view engine", "ejs"); //to enable EJS, set its as view engine
