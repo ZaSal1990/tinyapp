@@ -2,6 +2,7 @@ const express = require("express");
 const cookieParser = require('cookie-parser');
 const bodyParser = require("body-parser");
 const morgan = require('morgan');
+const bcrypt = require('bcryptjs');
 const app = express(); //creates interface (constructor)
 const PORT = 8080; // default port 8080
 
@@ -35,7 +36,8 @@ const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObjec
   for (let key in targetObject) {
     let user = targetObject[key];
     if (user.email === sourceEmail) {
-      if (user.password === sourcePassword) {
+      let hashedPassword = user.password;
+      if (bcrypt.compareSync(sourcePassword, hashedPassword) === true) {
         return user;
       } else return 'Password doesn\'t match';
     } else return 'Email doesn\'t exist';
@@ -180,11 +182,13 @@ app.post("/register", (req, res) => {//route to login post submission for regist
     if (ifEmailExistsAlready(req.body.email, users) === true) {
       res.status(400).send(`Error: ${res.statusCode} - Email exists already`);
     } else {
+      const password = req.body.password;
+      const hashedPassword = bcrypt.hashSync(password, 10);
       let newId = generateRandomString();
       users[newId] = {
         id : newId,
         email : req.body.email,
-        password : req.body.password
+        password : hashedPassword
       };
       console.log('from inside /register post route', users);
       //console.log(users[newId]);

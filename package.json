@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/ZaSal1990/tinyapp#readme",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.0",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.0"
