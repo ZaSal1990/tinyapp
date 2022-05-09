@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const bodyParser = require("body-parser");
 const app = express(); //creates interface (constructor)
 const PORT = 8080; // default port 8080
+const getUserByEmail = require('./helper.js');
 
 //Functions--------------------------------------------------------------------//
 
@@ -12,19 +13,18 @@ const generateRandomString = () => {
   return Math.random().toString(36).slice(2, 8);
 };
 
-const ifEmailExistsAlready = (sourceEmail, targetObject) => {
-  for (let key in targetObject) {
-    let item = targetObject[key];
-    if (item.email === sourceEmail) {
-      return true;
-    }
-  }
-  return false;
-};
+// const ifEmailExistsAlready = (sourceEmail, targetObject) => {
+//   for (let key in targetObject) {
+//     let item = targetObject[key];
+//     if (item.email === sourceEmail) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
 
 const retrunURLSForTheUser = (userCookie, targetObject) => {
   let result = [];
-  console.log(userCookie);
   for (let key in targetObject) {
     if (targetObject[key].userID === userCookie) {
       result.push(targetObject[key].longURL);
@@ -57,6 +57,7 @@ const returnURLSforAUser = (userCookie, targetObject) => {
   }
   return newDatabase;
 };
+
 
 //GlobalObjects--------------------------------------------------------------------//
 const urlDatabase = {};
@@ -158,7 +159,7 @@ app.post("/register", (req, res) => {//route to login post submission for regist
   if (!req.body.email || !req.body.password) {
     res.status(400).send(`Error: ${res.statusCode} - Invalid data input`);
   } else {
-    if (ifEmailExistsAlready(req.body.email, users) === true) {
+    if (getUserByEmail(req.body.email, users) !== false) {
       res.status(400).send(`Error: ${res.statusCode} - Email exists already`);
     } else {
       const password = req.body.password;
