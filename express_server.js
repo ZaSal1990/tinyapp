@@ -20,15 +20,18 @@ const ifEmailExistsAlready = (sourceEmail, targetObject) => {
 };
 
 const retrunURLSForTheUser = (userCookie, targetObject) => {
-  //return targetObject[userCookie].longURL;
+  let result = [];
   for (let key in targetObject) {
     if (targetObject[key].userID === userCookie) {
-      return targetObject[key].longURL;
+      result.push(targetObject[key].longURL);
     }
   }
+  return result;
 };
 
+
 const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObject) => {
+  console.log('from inside fns body',users);
   for (let key in targetObject) {
     let user = targetObject[key];
     if (user.email === sourceEmail) {
@@ -38,6 +41,17 @@ const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObjec
     } else return 'Email doesn\'t exist';
   }
   return 'Cannot find user with these credentials';
+};
+
+const returnURLSforAUser = (userCookie, targetObject) => {
+  let newDatabase = {};
+  for (let key in targetObject) {
+    let user = targetObject[key];
+    if (user.userID === userCookie) {
+      newDatabase[key] = user.longURL;
+    }
+  }
+  return newDatabase;
 };
 
 const urlDatabase = {
@@ -52,7 +66,7 @@ const urlDatabase = {
 };
 
 
-const users = [];
+const users = {};
 
 //required esp when using POST route, doing JSON parsing on form input data (body) here
 app.use(bodyParser.urlencoded({extended: true}));
@@ -69,10 +83,10 @@ app.get("/urls", (req, res) => {
     res.redirect('/login');
   } else {
     const templateVars = {
-      urls: urlDatabase,
+      urls : returnURLSforAUser(req.cookies['user_id'].id, urlDatabase),
       user : req.cookies['user_id'],
     };
-    //console.log(templateVars.urls);
+    console.log(templateVars.urls);
     //console.log(req.cookies['user_id'].id); //dead code
     //console.log(urlDatabase);//dead code
     //console.log(retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase));
@@ -105,10 +119,9 @@ app.get("/urls/:shortURL", (req, res) => {
     const templateVars = {
       shortURL: req.params.shortURL,
       urls : retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase),
-      //longURL: urlDatabase[req.params.shortURL],
       user : req.cookies['user_id']
     };
-    //console.log(templateVars.urls);
+    console.log(templateVars.urls);
     res.render("urls_show", templateVars);
   }
 });
@@ -129,6 +142,7 @@ app.get("/login", (req, res) => {
   const templateVars = {
     user: req.cookies['user_id'],
   };
+  console.log('from inside /login GET route', users)
   res.render("login", templateVars);
 });
 
@@ -172,7 +186,8 @@ app.post("/register", (req, res) => {//route to login post submission for regist
         email : req.body.email,
         password : req.body.password
       };
-      console.log(users[newId]);
+      console.log('from inside /register post route', users);
+      //console.log(users[newId]);
       res.cookie('user_id', users[newId]); //user_id should be stored
       res.redirect(`/urls`);//redirecting to route inside ''
     }
@@ -185,14 +200,19 @@ app.post("/login", (req, res) => {//route to login post submission
   if (!req.body.email || !req.body.password) {
     res.status(400).send(`Error: ${res.statusCode} - Invalid data input`);
   } else {
+    console.log('from inside /login post route', users);
     let databaseSearch = ifCredentialsMatchedReturnUser(newemail, newpassword, users); //if user is found in DB
-    if (typeof databaseSearch === "object") {
-      console.log(databaseSearch);
+    //console.log(typeof databaseSearch); //unable to find user when login with second registrant
+    if (typeof databaseSearch === 'string') {
+      //console.log(databaseSearch);
+      res.status(403).send(`Error: ${res.statusCode} ${databaseSearch}`);
+    } else {
+      //console.log(databaseSearch);
       res.cookie('user_id', databaseSearch); //send username via cookie and establish session
       res.redirect(`/urls`);//redirecting to route inside ''
-    } else res.status(403).send(`Error: ${res.statusCode} ${databaseSearch}`);
-    //prepping/instructing vis response server to set cookie and passed as object to be later used for session
+    }
   }
+  //prepping/instructing vis response server to set cookie and passed as object to be later used for session
 });
 
 app.post("/logout", (req, res) => {//route to login post submission
