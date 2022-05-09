@@ -37,12 +37,12 @@ const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObjec
     let user = targetObject[key];
     if (user.email === sourceEmail) {
       let hashedPassword = user.password;
-      if (bcrypt.compareSync(sourcePassword, hashedPassword) === true) {
+      if (bcrypt.compareSync(sourcePassword, hashedPassword)) {
         return user;
-      } else return 'Password doesn\'t match';
-    } else return 'Email doesn\'t exist';
+      } //else return 'Password doesn\'t match'; //return error as object and validate error key
+    } //else return 'Email doesn\'t exist';
   }
-  return 'Cannot find user with these credentials';
+  return false; //'Cannot find user with these credentials';
 };
 
 const returnURLSforAUser = (userCookie, targetObject) => {
@@ -207,7 +207,7 @@ app.post("/login", (req, res) => {//route to login post submission
     console.log('from inside /login post route', users);
     let databaseSearch = ifCredentialsMatchedReturnUser(newemail, newpassword, users); //if user is found in DB
     //console.log(typeof databaseSearch); //unable to find user when login with second registrant
-    if (typeof databaseSearch === 'string') {
+    if (/*typeof*/ !databaseSearch /*=== 'string'*/) {
       //console.log(databaseSearch);
       res.status(403).send(`Error: ${res.statusCode} ${databaseSearch}`);
     } else {
