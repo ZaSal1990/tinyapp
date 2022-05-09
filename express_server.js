@@ -1,5 +1,7 @@
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
+
 const bodyParser = require("body-parser");
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
@@ -22,6 +24,7 @@ const ifEmailExistsAlready = (sourceEmail, targetObject) => {
 
 const retrunURLSForTheUser = (userCookie, targetObject) => {
   let result = [];
+  console.log(userCookie);
   for (let key in targetObject) {
     if (targetObject[key].userID === userCookie) {
       result.push(targetObject[key].longURL);
@@ -39,16 +42,18 @@ const ifCredentialsMatchedReturnUser = (sourceEmail, sourcePassword, targetObjec
       let hashedPassword = user.password;
       if (bcrypt.compareSync(sourcePassword, hashedPassword)) {
         return user;
-      } //else return 'Password doesn\'t match'; //return error as object and validate error key
-    } //else return 'Email doesn\'t exist';
+      }
+    }
   }
-  return false; //'Cannot find user with these credentials';
+  return { error : 'email/password doesn\'t match'}; //'Cannot find user with these credentials';
 };
 
 const returnURLSforAUser = (userCookie, targetObject) => {
   let newDatabase = {};
+  console.log('user cookie check',userCookie);
   for (let key in targetObject) {
     let user = targetObject[key];
+    console.log('target objcet', targetObject, 'user cookie', userCookie);
     if (user.userID === userCookie) {
       newDatabase[key] = user.longURL;
     }
@@ -72,7 +77,8 @@ const users = {};
 
 //required esp when using POST route, doing JSON parsing on form input data (body) here
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+//app.use(cookieParser());
+app.use(cookieSession({ keys : ['user_id']}));
 app.use(morgan('dev'));
 app.set("view engine", "ejs"); //to enable EJS, set its as view engine
 
@@ -81,14 +87,15 @@ app.set("view engine", "ejs"); //to enable EJS, set its as view engine
 
 
 app.get("/urls", (req, res) => {
-  if (!req.cookies['user_id']) {
+  if (!req.session.user_id) {
     res.redirect('/login');
   } else {
+    console.log('url database', urlDatabase);
     const templateVars = {
-      urls : returnURLSforAUser(req.cookies['user_id'].id, urlDatabase),
-      user : req.cookies['user_id'],
+      urls : returnURLSforAUser(req.session.user_id, urlDatabase),
+      user : users[req.session.user_id],
     };
-    console.log(templateVars.urls);
+    console.log('temolateVars' ,templateVars.urls);
     //console.log(req.cookies['user_id'].id); //dead code
     //console.log(urlDatabase);//dead code
     //console.log(retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase));
@@ -97,13 +104,13 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies['user_id']) {
+  if (!req.session.user_id) {
     res.redirect('/login');
   } else {
-    console.log(req.cookies['user_id'].id); //dead code
+    console.log(req.session.user_id); //dead code
     console.log(urlDatabase);//dead code
     const templateVars = {
-      user : req.cookies['user_id'],
+      user : users[req.session.user_id],
       urls : urlDatabase
     };
     res.render("urls_new", templateVars);
@@ -111,7 +118,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  if (!req.cookies['user_id']) {
+  if (!req.session.user_id) {
     res.redirect('/login');
   } else {
     //console.log(req.cookies['user_id'].id); //dead code
@@ -120,8 +127,8 @@ app.get("/urls/:shortURL", (req, res) => {
     //console.log(URL);
     const templateVars = {
       shortURL: req.params.shortURL,
-      urls : retrunURLSForTheUser(req.cookies['user_id'].id, urlDatabase),
-      user : req.cookies['user_id']
+      urls : retrunURLSForTheUser(req.session.user_id, urlDatabase),
+      user : users[req.session.user_id],
     };
     console.log(templateVars.urls);
     res.render("urls_show", templateVars);
@@ -135,14 +142,14 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user : req.cookies['user_id']
+    user : users[req.session.user_id],
   };
   res.render("register", templateVars);
 });
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: req.cookies['user_id'],
+    user: req.session.user_id,
   };
   console.log('from inside /login GET route', users)
   res.render("login", templateVars);
@@ -156,7 +163,7 @@ app.post("/urls", (req, res) => {//form brings data back to /urls
   let newshortURL = generateRandomString();
   urlDatabase[newshortURL] = {
     longURL : req.body.longURL,
-    userID : req.cookies['user_id'].id
+    userID : req.session.user_id
   };
   //with POST req, text field parameter is vaialable to req.body
   res.redirect(`/urls/${newshortURL}`);//redirecting to route **
@@ -192,7 +199,8 @@ app.post("/register", (req, res) => {//route to login post submission for regist
       };
       console.log('from inside /register post route', users);
       //console.log(users[newId]);
-      res.cookie('user_id', users[newId]); //user_id should be stored
+      //res.cookie('user_id', users[newId]); //user_id should be stored
+      req.session.user_id = users[newId].id;
       res.redirect(`/urls`);//redirecting to route inside ''
     }
   }
@@ -207,12 +215,13 @@ app.post("/login", (req, res) => {//route to login post submission
     console.log('from inside /login post route', users);
     let databaseSearch = ifCredentialsMatchedReturnUser(newemail, newpassword, users); //if user is found in DB
     //console.log(typeof databaseSearch); //unable to find user when login with second registrant
-    if (/*typeof*/ !databaseSearch /*=== 'string'*/) {
+    if (/*typeof*/ databaseSearch.error /*=== 'string'*/) {
       //console.log(databaseSearch);
-      res.status(403).send(`Error: ${res.statusCode} ${databaseSearch}`);
-    } else {
+      res.status(403).send(`Error: ${res.statusCode} ${databaseSearch.error}`);
+    } else if (!databaseSearch.error) {
       //console.log(databaseSearch);
-      res.cookie('user_id', databaseSearch); //send username via cookie and establish session
+      req.session.user_id = databaseSearch.id;
+      //res.cookie('user_id', databaseSearch); //send username via cookie and establish session
       res.redirect(`/urls`);//redirecting to route inside ''
     }
   }
@@ -220,7 +229,8 @@ app.post("/login", (req, res) => {//route to login post submission
 });
 
 app.post("/logout", (req, res) => {//route to login post submission
-  res.clearCookie('user_id');
+  //res.clearCookie('user_id');
+  req.session = null;
   res.redirect(`/urls`);//redirecting to route inside ''
 });
 
