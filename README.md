@@ -1,14 +1,17 @@
 # TinyApp Project
 
 TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly).
-This app is fully capable of storing user session cookies along with ehanced security by using data hashing. Users can create accounts, log in, create tiny URLs, edit and delete them. Restarting teh server erases database.
+This app is fully capable of storing user session cookies with ehanced data security provided by hashing. Users can create accounts, log in, create tiny URLs, edit and delete them. URL data (long or short) is stored as memomry based object which resets once server restarts.
 
 ## Final Product
 
-!["Screenshot of Cretae URLs page"](https://github.com/lighthouse-labs/tinyapp/screenShots/createURL-Express.png)
-!["Screenshot of tiny URLS page"](https://github.com/lighthouse-labs/tinyapp/screenShots/tinyURLs-Express.png)
-!["Screenshot of User Login page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLoginForm-Express.png)
-!["Screenshot of User Login Session page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLoginSession-Express.png)
+!["User Registration Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userRegistrationPage.png)
+!["User Login Page Default"](https://github.com/lighthouse-labs/tinyapp/screenShots/logInLandingPageDefault.png)
+!["Create URL Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/createURLPage.png)
+!["Edit URL page"](https://github.com/lighthouse-labs/tinyapp/screenShots/editURLPage.png)
+!["User Login Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLoginPage.png)
+!["User Login Landing Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLoginLandingPage.png)
+
 ## Dependencies
 
 - Node.js
@@ -22,5 +25,5 @@ This app is fully capable of storing user session cookies along with ehanced sec
 ## Getting Started
 
 - Install all dependencies (using the `npm install` command).
-- Run the development web server using the `node express_server.js` command.
+- Run the development web server using the `npm start` command.
 
