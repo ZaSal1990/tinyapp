@@ -10,7 +10,7 @@ This app is fully capable of storing user session cookies with ehanced data secu
 !["Create URL Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/createURLPage.png)
 !["Edit URL page"](https://github.com/lighthouse-labs/tinyapp/screenShots/editURLPage.png)
 !["User Login Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLoginPage.png)
-!["User Login Landing Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLoginLandingPage.png)
+!["User Login Landing Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLogInLandingPage.png)
 
 ## Dependencies
 
