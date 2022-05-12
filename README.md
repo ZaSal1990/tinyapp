@@ -5,12 +5,12 @@ This app is fully capable of storing user session cookies with ehanced data secu
 
 ## Final Product
 
-!["User Registration Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userRegistrationPage.png)
-!["User Login Page Default"](https://github.com/lighthouse-labs/tinyapp/screenShots/logInLandingPageDefault.png)
-!["Create URL Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/createURLPage.png)
-!["Edit URL page"](https://github.com/lighthouse-labs/tinyapp/screenShots/editURLPage.png)
-!["User Login Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLoginPage.png)
-!["User Login Landing Page"](https://github.com/lighthouse-labs/tinyapp/screenShots/userLogInLandingPage.png)
+!["User Registration Page"](https://github.com/ZaSal1990/tinyapp/blob/main/screenShots/userRegistrationPage.png)
+!["User Login Page Default"](https://github.com/ZaSal1990/tinyapp/blob/main/screenShots/logInLandingPageDefault.png)
+!["Create URL Page"](https://github.com/ZaSal1990/tinyapp/blob/main/screenShots/createURLPage.png)
+!["Edit URL page"](https://github.com/ZaSal1990/tinyapp/blob/main/screenShots/editURLPage.png)
+!["User Login Page"](https://github.com/ZaSal1990/tinyapp/blob/main/screenShots/userLoginPage.png)
+!["User Login Landing Page"](https://github.com/ZaSal1990/tinyapp/blob/main/tinyapp/screenShots/userLogInLandingPage.png)
 
 ## Dependencies
 
