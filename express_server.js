@@ -3,7 +3,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const bodyParser = require("body-parser");
 const app = express(); //creates interface (constructor)
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 //helper functions require--------------------------------------------------------------------//
 
